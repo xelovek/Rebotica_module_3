@@ -1,1 +1,2 @@
-123
+num = 123
+print(num)
