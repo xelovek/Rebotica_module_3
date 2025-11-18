@@ -30,7 +30,7 @@ s = Session() # Создаем объект класса Сессии
 
 fake = faker.Faker('ru_RU')
 
-# Добавили в таблицу 400 рандомных записей
+# # Добавили в таблицу 400 рандомных записей
 # for x in range(400):
 #     user_id = random.randint(1000, 9999)
 #     name = fake.first_name()
@@ -68,3 +68,8 @@ data = s.query(Users).filter(Users.id > 1500, Users.id < 1700)
 for user in data:
     print(f'id: {user.id}, name: {user.name}')
 
+s.query(Users).filter(Users.id > 2000).delete()
+s.commit()
+
+s.query(Users).filter(Users.id % 2 == 0).update({"name":"Jackie Chan"})
+s.commit()
