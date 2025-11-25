@@ -18,13 +18,21 @@ while True:
         print('Подключился', addr)
         new_socket.setblocking(False) # Отключаем завершение подключения для новых игроков
         players.append(new_socket) # Добавляем игроков в список
-
-        for sock in players: # Пробегаемся по списку игроков
-            try:
-                data = sock.recv(1024).decode() # Получаеми сообщения от клиентов игроков
-                print("Получил", data)
-            except:
-                pass
-
     except BlockingIOError:
         pass
+
+    for sock in players:  # Пробегаемся по списку игроков
+        try:
+            data = sock.recv(1024).decode()  # Получаеми сообщения от клиентов игроков
+            print("Получил", data)
+        except:
+            pass
+
+    # Отправка игрокам поля
+    for sock in players: # пробегаемся по списку игроков, берем их сокеты в sock
+        try: # пробуем исполнить код
+            sock.send("LOL".encode())
+        except: # если в теле try ошибка, то
+            players.remove(sock)
+            sock.close()
+            print("Сокет закрыт")
