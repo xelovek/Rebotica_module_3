@@ -36,15 +36,17 @@ while run:
                 old = vector
                 msg = f"<{vector[0]},{vector[1]}>"
                 sock.send(msg.encode())
+                # Получаем
+                data = sock.recv(1024).decode()
+                print("Получил:", data)
 
-    # Получаем
-    data = sock.recv(1024).decode()
-    print("Получил:", data)
+                # Рисуем новое поле
+                screen.fill('gray')
+                pygame.draw.circle(screen, (255, 0, 0), CC, radius)
+                pygame.display.update()
 
-    # Рисуем новое поле
-    screen.fill('gray')
-    pygame.draw.circle(screen, (255, 0, 0), CC, radius)
-    pygame.display.update()
+
+
 
 
 
