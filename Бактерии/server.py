@@ -3,6 +3,17 @@ import time
 from db import *
 import pygame
 
+def find(vector: str):
+    first = None
+    for num, sign in enumerate(vector):
+        if sign == "<":
+            first = num
+        if sign == ">" and first is not None:
+            second = num
+            result = list(map(float, vector[first + 1:second].split(",")))
+            return result
+    return ""
+
 # Локальный класс таблицы игроков
 class LocalPlayer:
     def __init__(self, id, name, sock, addr):
@@ -23,11 +34,20 @@ class LocalPlayer:
         self.x += self.speed_x
         self.y += self.speed_y
 
+    def change_speed(self, vector):
+        vector = find(vector)
+        if vector[0] == 0 and vector[1] == 0:
+            self.speed_x = self.speed_y = 0
+        else:
+            vector = vector[0] * self.abs_speed, vector[1] * self.abs_speed
+            self.speed_x = vector[0]
+            self.speed_y = vector[1]
+
 pygame.init()
 
 WIDHT_ROOM, HEIGHT_ROOM = 4000, 4000
 WIDHT_SERVER, HEIGHT_SERVER = 300, 300
-FPS = 60
+FPS = 100
 
 # Создание окна сервера
 screen = pygame.display.set_mode((WIDHT_SERVER, HEIGHT_SERVER))
@@ -44,7 +64,6 @@ print('Сокет создался')
 
 players = {}
 server_works = True
-
 while server_works:
     clock.tick(FPS)
     try:
@@ -63,15 +82,16 @@ while server_works:
     except BlockingIOError:
         pass
 
-    for id in players:  # Пробегаемся по списку игроков
+    for id in list(players):  # Пробегаемся по списку игроков
         try:
             data = players[id].sock.recv(1024).decode()  # Получаеми сообщения от клиентов игроков
             print("Получил", data)
+            players[id].change_speed(data)
         except:
             pass
 
     # Отправка статус игрового поля
-    for id in players: # пробегаемся по списку игроков, берем их сокеты в sock
+    for id in list(players): # пробегаемся по списку игроков, берем их сокеты в sock
         try: # пробуем исполнить код
             players[id].sock.send("LOL".encode())
         except: # если в теле try ошибка, то
@@ -94,8 +114,10 @@ while server_works:
         y = player.y * HEIGHT_SERVER // HEIGHT_ROOM
         size = player.size * WIDHT_SERVER // WIDHT_ROOM
         pygame.draw.circle(screen, "yellow2", (x, y), size)
-
-pygame.display.update()
+    for id in list(players):
+        player = players[id]
+        players[id].update()
+    pygame.display.update()
 
 pygame.quit()
 main_socket.close()

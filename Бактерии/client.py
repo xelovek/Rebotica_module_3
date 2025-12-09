@@ -19,9 +19,15 @@ text = " У лукоморья дуб зелёный,Златая цепь на 
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Бактерии")
+FPS = 100
+clock = pygame.time.Clock()
+
+
+
 
 run = True
 while run:
+    clock.tick(FPS)
     for event in pygame.event.get(): # цикл пробегает по всех событиям игры и кладет каждое из них в event
         if event.type == pygame.QUIT: # обрабатывает нажатие кнопки закрытия окна
             run = False
@@ -44,6 +50,12 @@ while run:
                 screen.fill('gray')
                 pygame.draw.circle(screen, (255, 0, 0), CC, radius)
                 pygame.display.update()
+
+                font = pygame.font.SysFont("Arial", 32)
+                text_surface = font.render("nickname", True, (255, 255, 255))
+                screen.blit(text_surface, (360, 270))
+
+                pygame.display.flip()
 
 
 

@@ -17,9 +17,9 @@ class Player(Base):
     y = Column(Integer, default=500)
     size = Column(Integer, default=50)
     errors = Column(Integer, default=0)
-    abs_speed = Column(Integer, default=2)
-    speed_x = Column(Integer, default=2)
-    speed_y = Column(Integer, default=2)
+    abs_speed = Column(Integer, default=1)
+    speed_x = Column(Integer, default=0)
+    speed_y = Column(Integer, default=0)
     def __init__(self, name, address):
         self.name = name
         self.address = address
