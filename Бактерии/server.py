@@ -87,6 +87,7 @@ while server_works:
             data = players[id].sock.recv(1024).decode()  # Получаеми сообщения от клиентов игроков
             print("Получил", data)
             players[id].change_speed(data)
+            players[id].db.sync()
         except:
             pass
 
@@ -118,6 +119,9 @@ while server_works:
         player = players[id]
         players[id].update()
     pygame.display.update()
+
+
+
 
 pygame.quit()
 main_socket.close()

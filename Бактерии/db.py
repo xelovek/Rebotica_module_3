@@ -24,6 +24,20 @@ class Player(Base):
         self.name = name
         self.address = address
 
+    def sync(self):
+        self.db.size = self.size
+        self.db.abs_speed = self.abs_speed
+        self.db.speed_x = self.speed_x
+        self.db.speed_y = self.speed_y
+        self.db.errors = self.errors
+        self.db.x = self.x
+        self.db.y = self.y
+        self.db.color = self.color
+        # self.db.w_vision = self.w_vision
+        # self.db.h_vision = self.h_vision
+        s.merge(self.db)
+        s.commit()
+
 Session = sessionmaker(bind=engine)
 s = Session()
 Base.metadata.create_all(engine) # Обязательная строка после создания классов таблиц
