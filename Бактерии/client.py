@@ -52,15 +52,13 @@ HEIGHT = 600
 CC = (WIDTH // 2, HEIGHT // 2)
 old = (0, 0)
 radius = 50
-colors = ['Maroon', 'DarkRed', 'FireBrick', 'Red', 'Salmon', 'Tomato', 'Coral', 'OrangeRed', 'Chocolate', 'SandyBrown',
-          'DarkOrange', 'Orange', 'DarkGoldenrod', 'Goldenrod', 'Gold', 'Olive', 'Yellow', 'YellowGreen', 'GreenYellow',
-          'Chartreuse', 'LawnGreen', 'Green', 'Lime', 'SpringGreen', 'MediumSpringGreen', 'Turquoise',
-          'LightSeaGreen', 'MediumTurquoise', 'Teal', 'DarkCyan', 'Aqua', 'Cyan', 'DeepSkyBlue',
-          'DodgerBlue', 'RoyalBlue', 'Navy', 'DarkBlue', 'MediumBlue']
+
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Настраиваем сокет
 sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)  # Отключаем пакетирование
 sock.connect(("localhost", 10000))
+sock.send(f"color:<{name},{color}>".encode())
+
 
 text = " У лукоморья дуб зелёный,Златая цепь на дубе том:,И днём и ночью кот учёный,"\
               "Всё ходит по цепи кругом;"\
