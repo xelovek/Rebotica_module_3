@@ -14,6 +14,17 @@ def find(vector: str):
             return result
     return ""
 
+def find_color(info: str):
+    first = None
+    for num, sign in enumerate(info):
+        if sign == "<":
+            first = num
+        if sign == ">" and first is not None:
+            second = num
+            result = info[first + 1:second].split(",")
+            return result
+    return ""
+
 # Локальный класс таблицы игроков
 class LocalPlayer:
     def __init__(self, id, name, sock, addr):
@@ -29,6 +40,9 @@ class LocalPlayer:
         self.abs_speed = 1
         self.speed_x = 0
         self.speed_y = 0
+        self.color = 'red'
+        self.w_vision = 800
+        self.h_vision = 600
 
     def update(self):
         self.x += self.speed_x
@@ -71,13 +85,20 @@ while server_works:
         new_socket, addr = main_socket.accept()  # принимаем входящие
         print('Подключился', addr)
         new_socket.setblocking(False) # Отключаем завершение подключения для новых игроков
+        login = new_socket.recv(1024).decode()
+        print(login)
         player = Player('Имя', addr)
+
+        if login.startswith("color"):
+            data1 = find_color(login[6:])
+
         s.merge(player)
         s.commit()
         addr = f'({addr[0]},{addr[1]})'
         data = s.query(Player).filter(Player.address == addr)
         for user in data:
-            player = LocalPlayer(user.id, "Имя", new_socket, addr)
+            player = LocalPlayer(user.id, player.name, new_socket, addr)
+            player.name, player.color = data1
             players[user.id] = player
     except BlockingIOError:
         pass
@@ -114,7 +135,7 @@ while server_works:
         x = player.x * WIDHT_SERVER // WIDHT_ROOM
         y = player.y * HEIGHT_SERVER // HEIGHT_ROOM
         size = player.size * WIDHT_SERVER // WIDHT_ROOM
-        pygame.draw.circle(screen, "yellow2", (x, y), size)
+        pygame.draw.circle(screen, player.color, (x, y), size)
     for id in list(players):
         player = players[id]
         players[id].update()

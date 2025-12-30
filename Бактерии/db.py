@@ -20,6 +20,9 @@ class Player(Base):
     abs_speed = Column(Integer, default=1)
     speed_x = Column(Integer, default=0)
     speed_y = Column(Integer, default=0)
+    color = Column(String(250), default="red")  # Добавили цвет
+    w_vision = Column(Integer, default=800)
+    h_vision = Column(Integer, default=600)  # Добавили размер квадрат
     def __init__(self, name, address):
         self.name = name
         self.address = address
@@ -33,8 +36,8 @@ class Player(Base):
         self.db.x = self.x
         self.db.y = self.y
         self.db.color = self.color
-        # self.db.w_vision = self.w_vision
-        # self.db.h_vision = self.h_vision
+        self.db.w_vision = self.w_vision
+        self.db.h_vision = self.h_vision
         s.merge(self.db)
         s.commit()
 
