@@ -57,6 +57,33 @@ class LocalPlayer:
             self.speed_x = vector[0]
             self.speed_y = vector[1]
 
+    def load(self):
+        self.size = self.db.size
+        self.abs_speed = self.db.abs_speed
+        self.speed_x = self.db.speed_x
+        self.speed_y = self.db.speed_y
+        self.errors = self.db.errors
+        self.x = self.db.x
+        self.y = self.db.y
+        self.color = self.db.color
+        self.w_vision = self.db.w_vision
+        self.h_vision = self.db.h_vision
+        return self
+
+    def sync(self):
+        self.db.size = self.size
+        self.db.abs_speed = self.abs_speed
+        self.db.speed_x = self.speed_x
+        self.db.speed_y = self.speed_y
+        self.db.errors = self.errors
+        self.db.x = self.x
+        self.db.y = self.y
+        self.db.color = self.color
+        self.db.w_vision = self.w_vision
+        self.db.h_vision = self.h_vision
+        s.merge(self.db)
+        s.commit()
+
 pygame.init()
 
 WIDHT_ROOM, HEIGHT_ROOM = 4000, 4000
@@ -86,19 +113,19 @@ while server_works:
         print('Подключился', addr)
         new_socket.setblocking(False) # Отключаем завершение подключения для новых игроков
         login = new_socket.recv(1024).decode()
-        print(login)
         player = Player('Имя', addr)
 
         if login.startswith("color"):
             data1 = find_color(login[6:])
+            player.name, player.color = data1
 
         s.merge(player)
         s.commit()
+
         addr = f'({addr[0]},{addr[1]})'
         data = s.query(Player).filter(Player.address == addr)
         for user in data:
-            player = LocalPlayer(user.id, player.name, new_socket, addr)
-            player.name, player.color = data1
+            player = LocalPlayer(user.id, player.name, new_socket, addr).load()
             players[user.id] = player
     except BlockingIOError:
         pass
@@ -112,10 +139,52 @@ while server_works:
         except:
             pass
 
+    # Определим, что видит каждый игрок
+    visible_bacteries = {}
+    for id in list(players):
+        visible_bacteries[id] = []
+
+    pairs = list(players.items())
+    for i in range(0, len(pairs)):
+        for j in range(i + 1, len(pairs)):
+            # Рассматриваем пару игроков
+            hero_1: LocalPlayer = pairs[i][1]
+            hero_2: LocalPlayer = pairs[j][1]
+            dist_x = hero_2.x - hero_1.x
+            dist_y = hero_2.y - hero_1.y
+
+            # i-й игрок видит j-того
+            if abs(dist_x) <= hero_1.w_vision // 2 + hero_2.size and abs(dist_y) <= hero_1.h_vision // 2 + hero_2.size:
+                # Подготовим данные к добавлению в список
+                x_ = str(round(dist_x))
+                y_ = str(round(dist_y))  # временные
+                size_ = str(round(hero_2.size))
+                color_ = hero_2.color
+
+                data = x_ + " " + y_ + " " + size_ + " " + color_
+                visible_bacteries[hero_1.id].append(data)
+
+            # j-й игрок видит i-того
+            if abs(dist_x) <= hero_2.w_vision // 2 + hero_1.size and abs(dist_y) <= hero_2.h_vision // 2 + hero_1.size:
+                # Подготовим данные к добавлению в список
+                x_ = str(round(-dist_x))
+                y_ = str(round(-dist_y))  # временные
+                size_ = str(round(hero_1.size))
+                color_ = hero_1.color
+
+                data = x_ + " " + y_ + " " + size_ + " " + color_
+                visible_bacteries[hero_2.id].append(data)
+
+    # Формируем ответ каждой бактерии
+    for id in list(players):
+        visible_bacteries[id] = "<" + ",".join(visible_bacteries[id]) + ">"
+        print(visible_bacteries[id])
+
+
     # Отправка статус игрового поля
     for id in list(players): # пробегаемся по списку игроков, берем их сокеты в sock
         try: # пробуем исполнить код
-            players[id].sock.send("LOL".encode())
+            players[id].sock.send(visible_bacteries[id].encode())
         except: # если в теле try ошибка, то
             players[id].sock.close()
             del players[id]

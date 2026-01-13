@@ -73,6 +73,25 @@ clock = pygame.time.Clock()
 font = pygame.font.SysFont("Arial", 32)
 text_surface = font.render(name, True, (255, 255, 255))
 
+def find(vector: str):
+    first = None
+    for num, sign in enumerate(vector):
+        if sign == "<":
+            first = num
+        if sign == ">" and first is not None:
+            second = num
+            result = vector[first + 1:second]  # Поменяли
+            return result
+    return ""
+
+def draw_bacteries(data: list[str]):
+    for num, bact in enumerate(data):
+        data = bact.split(" ")  # Разбиваем по пробелам подстроку одной бактерии
+        x = CC[0] + int(data[0])
+        y = CC[1] + int(data[1])
+        size = int(data[2])
+        color = data[3]
+        pygame.draw.circle(screen, color, (x, y), size)
 
 run = True
 while run:
@@ -95,12 +114,16 @@ while run:
 
     # Получаем
     data = sock.recv(1024).decode()
-    print("Получил:", data)
 
+    print("Получил:", data)
+    data = find(data).split(",")  # Разбиваем на шары
     # Рисуем новое поле
     screen.fill('gray')
     pygame.draw.circle(screen, color, CC, radius)
     screen.blit(text_surface, (360, 270))
+    if data != ['']:
+        print(data)
+        draw_bacteries(data)
     pygame.display.update()
 
 
