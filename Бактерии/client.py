@@ -72,6 +72,8 @@ clock = pygame.time.Clock()
 
 font = pygame.font.SysFont("Arial", 32)
 text_surface = font.render(name, True, (255, 255, 255))
+text_render = text_surface.get_rect()
+text_render.center = CC
 
 def find(vector: str):
     first = None
@@ -120,7 +122,7 @@ while run:
     # Рисуем новое поле
     screen.fill('gray')
     pygame.draw.circle(screen, color, CC, radius)
-    screen.blit(text_surface, (360, 270))
+    screen.blit(text_surface, text_render)
     if data != ['']:
         print(data)
         draw_bacteries(data)

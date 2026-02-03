@@ -1,7 +1,9 @@
+import random
 import socket
 import time
 from db import *
 import pygame
+from russian_names import RussianNames
 
 def find(vector: str):
     first = None
@@ -45,8 +47,25 @@ class LocalPlayer:
         self.h_vision = 600
 
     def update(self):
-        self.x += self.speed_x
-        self.y += self.speed_y
+        # х координата
+        if self.x - self.size <= 0:  # Если игрок вылазит за левую стенку
+            if self.speed_x >= 0:  # Но при этом двигается право
+                self.x += self.speed_x  # то двигаем его
+        elif self.x + self.size >= WIDHT_ROOM:  # Если игрок вылазит за правую стенку
+            if self.speed_x <= 0:  # Но при этом двигается влево
+                self.x += self.speed_x  # то двигаем его
+        else:  # Если игрок находится в границе комнаты
+            self.x += self.speed_x
+
+        # х координата
+        if self.y - self.size <= 0:  # Если игрок вылазит за левую стенку
+            if self.speed_y >= 0:  # Но при этом двигается право
+                self.y += self.speed_y  # то двигаем его
+        elif self.y + self.size >= HEIGHT_ROOM:  # Если игрок вылазит за правую стенку
+            if self.speed_y <= 0:  # Но при этом двигается влево
+                self.y += self.speed_y  # то двигаем его
+        else:  # Если игрок находится в границе комнаты
+            self.y += self.speed_y
 
     def change_speed(self, vector):
         vector = find(vector)
@@ -89,6 +108,14 @@ pygame.init()
 WIDHT_ROOM, HEIGHT_ROOM = 4000, 4000
 WIDHT_SERVER, HEIGHT_SERVER = 300, 300
 FPS = 100
+MOBS_QUANTITY = 25
+
+colors = ['Maroon', 'DarkRed', 'FireBrick', 'Red', 'Salmon', 'Tomato', 'Coral', 'OrangeRed', 'Chocolate', 'SandyBrown',
+          'DarkOrange', 'Orange', 'DarkGoldenrod', 'Goldenrod', 'Gold', 'Olive', 'Yellow', 'YellowGreen', 'GreenYellow',
+          'Chartreuse', 'LawnGreen', 'Green', 'Lime', 'SpringGreen', 'MediumSpringGreen', 'Turquoise',
+          'LightSeaGreen', 'MediumTurquoise', 'Teal', 'DarkCyan', 'Aqua', 'Cyan', 'DeepSkyBlue',
+          'DodgerBlue', 'RoyalBlue', 'Navy', 'DarkBlue', 'MediumBlue']
+players = {}
 
 # Создание окна сервера
 screen = pygame.display.set_mode((WIDHT_SERVER, HEIGHT_SERVER))
@@ -103,7 +130,22 @@ main_socket.setblocking(False) # Отключаем завершение под�
 main_socket.listen(5) # Включаем прослушку юзеров например 5 одновременно
 print('Сокет создался')
 
-players = {}
+# Создание мобов
+names = RussianNames(count=MOBS_QUANTITY * 2, patronymic=False, surname=False, rare=True)
+names = list(set(names))  # Список неповторяющихся имён
+
+for x in range(MOBS_QUANTITY):
+    server_mob = Player(names[x], None)
+    server_mob.color = random.choice(colors)
+    server_mob.x, server_mob.y = random.randint(0, WIDHT_ROOM), random.randint(0, HEIGHT_ROOM)
+    server_mob.speed_x, server_mob.speed_y = random.randint(-1, 1), random.randint(-1, 1)
+    server_mob.size = random.randint(10, 100)
+    s.add(server_mob)
+    s.commit()
+    local_mob = LocalPlayer(server_mob.id, server_mob.name, None, None).load()
+    players[server_mob.id] = local_mob  # Записываем всех мобов в словарь
+
+
 server_works = True
 while server_works:
     clock.tick(FPS)
@@ -131,13 +173,14 @@ while server_works:
         pass
 
     for id in list(players):  # Пробегаемся по списку игроков
-        try:
-            data = players[id].sock.recv(1024).decode()  # Получаеми сообщения от клиентов игроков
-            print("Получил", data)
-            players[id].change_speed(data)
-            players[id].db.sync()
-        except:
-            pass
+        if players[id].sock is not None:
+            try:
+                data = players[id].sock.recv(1024).decode()  # Получаеми сообщения от клиентов игроков
+                print("Получил", data)
+                players[id].change_speed(data)
+                players[id].db.sync()
+            except:
+                pass
 
     # Определим, что видит каждый игрок
     visible_bacteries = {}
@@ -155,25 +198,27 @@ while server_works:
 
             # i-й игрок видит j-того
             if abs(dist_x) <= hero_1.w_vision // 2 + hero_2.size and abs(dist_y) <= hero_1.h_vision // 2 + hero_2.size:
-                # Подготовим данные к добавлению в список
-                x_ = str(round(dist_x))
-                y_ = str(round(dist_y))  # временные
-                size_ = str(round(hero_2.size))
-                color_ = hero_2.color
+                if hero_1.address is not None:
+                    # Подготовим данные к добавлению в список
+                    x_ = str(round(dist_x))
+                    y_ = str(round(dist_y))  # временные
+                    size_ = str(round(hero_2.size))
+                    color_ = hero_2.color
 
-                data = x_ + " " + y_ + " " + size_ + " " + color_
-                visible_bacteries[hero_1.id].append(data)
+                    data = x_ + " " + y_ + " " + size_ + " " + color_
+                    visible_bacteries[hero_1.id].append(data)
 
             # j-й игрок видит i-того
             if abs(dist_x) <= hero_2.w_vision // 2 + hero_1.size and abs(dist_y) <= hero_2.h_vision // 2 + hero_1.size:
-                # Подготовим данные к добавлению в список
-                x_ = str(round(-dist_x))
-                y_ = str(round(-dist_y))  # временные
-                size_ = str(round(hero_1.size))
-                color_ = hero_1.color
+                if hero_2.address is not None:
+                    # Подготовим данные к добавлению в список
+                    x_ = str(round(-dist_x))
+                    y_ = str(round(-dist_y))  # временные
+                    size_ = str(round(hero_1.size))
+                    color_ = hero_1.color
 
-                data = x_ + " " + y_ + " " + size_ + " " + color_
-                visible_bacteries[hero_2.id].append(data)
+                    data = x_ + " " + y_ + " " + size_ + " " + color_
+                    visible_bacteries[hero_2.id].append(data)
 
     # Формируем ответ каждой бактерии
     for id in list(players):
@@ -183,15 +228,16 @@ while server_works:
 
     # Отправка статус игрового поля
     for id in list(players): # пробегаемся по списку игроков, берем их сокеты в sock
-        try: # пробуем исполнить код
-            players[id].sock.send(visible_bacteries[id].encode())
-        except: # если в теле try ошибка, то
-            players[id].sock.close()
-            del players[id]
-            # Так же удаляем строчку из БД
-            s.query(Player).filter(Player.id == id).delete()
-            s.commit()
-            print("Сокет закрыт")
+        if players[id].sock is not None:
+            try: # пробуем исполнить код
+                players[id].sock.send(visible_bacteries[id].encode())
+            except: # если в теле try ошибка, то
+                players[id].sock.close()
+                del players[id]
+                # Так же удаляем строчку из БД
+                s.query(Player).filter(Player.id == id).delete()
+                s.commit()
+                print("Сокет закрыт")
 
     # Отрисовываем серверное окно
     for event in pygame.event.get():
