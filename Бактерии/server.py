@@ -1,3 +1,4 @@
+import math
 import random
 import socket
 import time
@@ -145,32 +146,34 @@ for x in range(MOBS_QUANTITY):
     local_mob = LocalPlayer(server_mob.id, server_mob.name, None, None).load()
     players[server_mob.id] = local_mob  # Записываем всех мобов в словарь
 
-
+tick = -1
 server_works = True
 while server_works:
     clock.tick(FPS)
-    try:
-        # проверяем желающих войти в игру
-        new_socket, addr = main_socket.accept()  # принимаем входящие
-        print('Подключился', addr)
-        new_socket.setblocking(False) # Отключаем завершение подключения для новых игроков
-        login = new_socket.recv(1024).decode()
-        player = Player('Имя', addr)
+    tick+=1
+    if tick % 200 == 0:
+        try:
+            # проверяем желающих войти в игру
+            new_socket, addr = main_socket.accept()  # принимаем входящие
+            print('Подключился', addr)
+            new_socket.setblocking(False) # Отключаем завершение подключения для новых игроков
+            login = new_socket.recv(1024).decode()
+            player = Player('Имя', addr)
 
-        if login.startswith("color"):
-            data1 = find_color(login[6:])
-            player.name, player.color = data1
+            if login.startswith("color"):
+                data1 = find_color(login[6:])
+                player.name, player.color = data1
 
-        s.merge(player)
-        s.commit()
+            s.merge(player)
+            s.commit()
 
-        addr = f'({addr[0]},{addr[1]})'
-        data = s.query(Player).filter(Player.address == addr)
-        for user in data:
-            player = LocalPlayer(user.id, player.name, new_socket, addr).load()
-            players[user.id] = player
-    except BlockingIOError:
-        pass
+            addr = f'({addr[0]},{addr[1]})'
+            data = s.query(Player).filter(Player.address == addr)
+            for user in data:
+                player = LocalPlayer(user.id, player.name, new_socket, addr).load()
+                players[user.id] = player
+        except BlockingIOError:
+            pass
 
     for id in list(players):  # Пробегаемся по списку игроков
         if players[id].sock is not None:
@@ -181,6 +184,11 @@ while server_works:
                 players[id].db.sync()
             except:
                 pass
+
+        else:
+            if tick % 400 == 0:
+                vector = f"<{random.randint(-1, 1)},{random.randint(-1, 1)}>"
+                players[id].change_speed(vector)  # Случайный вектор для мобов
 
     # Определим, что видит каждый игрок
     visible_bacteries = {}
@@ -198,6 +206,12 @@ while server_works:
 
             # i-й игрок видит j-того
             if abs(dist_x) <= hero_1.w_vision // 2 + hero_2.size and abs(dist_y) <= hero_1.h_vision // 2 + hero_2.size:
+                # Проверка может ли 1-й съесть 2-го игрока
+                distance = math.sqrt(dist_x ** 2 + dist_y ** 2)
+                if distance <= hero_1.size and hero_1.size > 1.1 * hero_2.size:
+                    # Меняем радиус первого игрока
+                    hero_2.size, hero_2.speed_x, hero_2.speed_y = 0, 0, 0
+
                 if hero_1.address is not None:
                     # Подготовим данные к добавлению в список
                     x_ = str(round(dist_x))
@@ -210,6 +224,12 @@ while server_works:
 
             # j-й игрок видит i-того
             if abs(dist_x) <= hero_2.w_vision // 2 + hero_1.size and abs(dist_y) <= hero_2.h_vision // 2 + hero_1.size:
+                # Проверка может ли 2-й съесть 1-го игрока
+                distance = math.sqrt(dist_x ** 2 + dist_y ** 2)
+                if distance <= hero_2.size and hero_2.size > 1.1 * hero_1.size:
+                    # Меняем радиус второго игрока
+                    hero_1.size, hero_1.speed_x, hero_1.speed_y = 0, 0, 0
+
                 if hero_2.address is not None:
                     # Подготовим данные к добавлению в список
                     x_ = str(round(-dist_x))
@@ -238,6 +258,15 @@ while server_works:
                 s.query(Player).filter(Player.id == id).delete()
                 s.commit()
                 print("Сокет закрыт")
+
+    # Чистим список от отвалившихся игроков
+    for id in list(players):
+        if players[id].errors >= 500 or players[id].size == 0:
+            if players[id].sock is not None:
+                players[id].sock.close()
+            del players[id]
+            s.query(Player).filter(Player.id == id).delete()
+            s.commit()
 
     # Отрисовываем серверное окно
     for event in pygame.event.get():
