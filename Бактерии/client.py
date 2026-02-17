@@ -117,15 +117,16 @@ while run:
     # Получаем
     data = sock.recv(1024).decode()
 
-    print("Получил:", data)
+    # print("Получил:", data)
     data = find(data).split(",")  # Разбиваем на шары
     # Рисуем новое поле
     screen.fill('gray')
+    if data != ['']:
+        # print(data)
+        draw_bacteries(data)
     pygame.draw.circle(screen, color, CC, radius)
     screen.blit(text_surface, text_render)
-    if data != ['']:
-        print(data)
-        draw_bacteries(data)
+
     pygame.display.update()
 
 

@@ -104,12 +104,21 @@ class LocalPlayer:
         s.merge(self.db)
         s.commit()
 
+class Food:
+    def __init__(self, x, y, size, color):
+        self.x = x
+        self.y = y
+        self.size = size
+        self.color = color
+
 pygame.init()
 
 WIDHT_ROOM, HEIGHT_ROOM = 4000, 4000
 WIDHT_SERVER, HEIGHT_SERVER = 300, 300
 FPS = 100
 MOBS_QUANTITY = 25
+FOOD_SIZE = 15
+FOOD_QUANTITY = WIDHT_ROOM * HEIGHT_ROOM // 40000
 
 colors = ['Maroon', 'DarkRed', 'FireBrick', 'Red', 'Salmon', 'Tomato', 'Coral', 'OrangeRed', 'Chocolate', 'SandyBrown',
           'DarkOrange', 'Orange', 'DarkGoldenrod', 'Goldenrod', 'Gold', 'Olive', 'Yellow', 'YellowGreen', 'GreenYellow',
@@ -145,6 +154,16 @@ for x in range(MOBS_QUANTITY):
     s.commit()
     local_mob = LocalPlayer(server_mob.id, server_mob.name, None, None).load()
     players[server_mob.id] = local_mob  # Записываем всех мобов в словарь
+
+# Создание еды
+foods = []
+for i in range(FOOD_QUANTITY):
+    foods.append(Food(
+        x=random.randint(0, WIDHT_ROOM),
+        y=random.randint(0, HEIGHT_ROOM),
+        size=FOOD_SIZE,
+        color=random.choice(colors)
+    ))
 
 tick = -1
 server_works = True
@@ -197,6 +216,29 @@ while server_works:
 
     pairs = list(players.items())
     for i in range(0, len(pairs)):
+        # Только для игрока, отображение еды
+        for food in foods:
+            hero: LocalPlayer = pairs[i][1]
+            dist_x = food.x - hero.x
+            dist_y = food.y - hero.y
+            if abs(dist_x) <= hero.w_vision // 2 + food.size and abs(dist_y) <= hero.h_vision // 2 + food.size:
+                # Проверка может ли 1-й игрок видеть еду.
+                distance = math.sqrt(dist_x ** 2 + dist_y ** 2)
+                if distance < hero.size:
+                    # Тут мы в будущем напишем код увеличения размера
+                    hero.size = math.sqrt(hero.size ** 2 + food.size ** 2)
+                    # hero.new_speed()
+                    food.size = 0
+                    foods.remove(food)
+                if hero.address is not None and food.size != 0:
+                    # Подготовим данные к добавлению в список
+                    x_ = str(round(dist_x))
+                    y_ = str(round(dist_y))  # временные
+                    size_ = str(round(food.size))
+                    color_ = food.color
+
+                    data = x_ + " " + y_ + " " + size_ + " " + color_
+                    visible_bacteries[hero.id].append(data)
         for j in range(i + 1, len(pairs)):
             # Рассматриваем пару игроков
             hero_1: LocalPlayer = pairs[i][1]
@@ -272,7 +314,6 @@ while server_works:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             server_works = False
-
     screen.fill('black')
     for id in list(players):
         player = players[id]
@@ -283,6 +324,7 @@ while server_works:
     for id in list(players):
         player = players[id]
         players[id].update()
+        player.sync()
     pygame.display.update()
 
 
