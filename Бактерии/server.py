@@ -251,6 +251,7 @@ while server_works:
                 # Проверка может ли 1-й съесть 2-го игрока
                 distance = math.sqrt(dist_x ** 2 + dist_y ** 2)
                 if distance <= hero_1.size and hero_1.size > 1.1 * hero_2.size:
+                    hero_1.size = math.sqrt(hero_1.size ** 2 + hero_2.size ** 2)
                     # Меняем радиус первого игрока
                     hero_2.size, hero_2.speed_x, hero_2.speed_y = 0, 0, 0
 
@@ -269,6 +270,7 @@ while server_works:
                 # Проверка может ли 2-й съесть 1-го игрока
                 distance = math.sqrt(dist_x ** 2 + dist_y ** 2)
                 if distance <= hero_2.size and hero_2.size > 1.1 * hero_1.size:
+                    hero_2.size = math.sqrt(hero_1.size ** 2 + hero_2.size ** 2)
                     # Меняем радиус второго игрока
                     hero_1.size, hero_1.speed_x, hero_1.speed_y = 0, 0, 0
 
@@ -284,6 +286,8 @@ while server_works:
 
     # Формируем ответ каждой бактерии
     for id in list(players):
+        r_ = str(round(players[id].size))
+        visible_bacteries[id] = [r_] + visible_bacteries[id]  # Добавляем в начало списка размер игрока
         visible_bacteries[id] = "<" + ",".join(visible_bacteries[id]) + ">"
         print(visible_bacteries[id])
 
@@ -324,8 +328,10 @@ while server_works:
     for id in list(players):
         player = players[id]
         players[id].update()
-        player.sync()
+        if tick % 500 == 0:
+            player.sync()
     pygame.display.update()
+
 
 
 

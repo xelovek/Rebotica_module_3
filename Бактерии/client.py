@@ -4,6 +4,8 @@ import pygame
 import tkinter as tk
 from tkinter import ttk
 import tkinter.messagebox
+from tkinter.colorchooser import *
+from tkinter import *
 
 name=""
 color=""
@@ -39,9 +41,18 @@ colors = ['Maroon', 'DarkRed', 'FireBrick', 'Red', 'Salmon', 'Tomato', 'Coral', 
           'LightSeaGreen', 'MediumTurquoise', 'Teal', 'DarkCyan', 'Aqua', 'Cyan', 'DeepSkyBlue',
           'DodgerBlue', 'RoyalBlue', 'Navy', 'DarkBlue', 'MediumBlue']
 
-combo = ttk.Combobox(root, values=colors, textvariable=color)
-combo.bind("<<ComboboxSelected>>", scroll)
-combo.pack()
+# combo = ttk.Combobox(root, values=colors, textvariable=color)
+# combo.bind("<<ComboboxSelected>>", scroll)
+# combo.pack()
+
+def vibor():
+    global color
+    a=askcolor()
+    color=a[1]
+
+viborb=Button(root,text='Выберите цвет', command=vibor)
+viborb.pack()
+
 name_btn = tk.Button(root, text="Зайти в игру", command=login)
 name_btn.pack()
 root.mainloop()
@@ -114,16 +125,16 @@ while run:
                 sock.send(msg.encode())
 
 
+
+
     # Получаем
     data = sock.recv(1024).decode()
-
-    # print("Получил:", data)
     data = find(data).split(",")  # Разбиваем на шары
     # Рисуем новое поле
     screen.fill('gray')
     if data != ['']:
-        # print(data)
-        draw_bacteries(data)
+        radius = int(data[0])  # Сохраняем размер из сообщения в переменную
+        draw_bacteries(data[1:])  # Срезаем размер, чтобы он не попадал в ф-ию рисования соседейй
     pygame.draw.circle(screen, color, CC, radius)
     screen.blit(text_surface, text_render)
 
