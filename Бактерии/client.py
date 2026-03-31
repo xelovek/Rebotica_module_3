@@ -10,10 +10,6 @@ from tkinter import *
 name=""
 color=""
 
-def scroll(event):
-    global color
-    color = combo.get()
-    style.configure("TCombobox", fieldbackground=color, background="white")
 def login():
     global name
     name = row.get()

@@ -104,6 +104,10 @@ class LocalPlayer:
         s.merge(self.db)
         s.commit()
 
+    def new_speed(self):
+        #  Меняем абсолютную скорость игрока
+        self.abs_speed = 10 / math.sqrt(self.size)
+
 class Food:
     def __init__(self, x, y, size, color):
         self.x = x
@@ -194,6 +198,35 @@ while server_works:
         except BlockingIOError:
             pass
 
+        # Дополняем список мобов
+        if len(foods) != 0:
+            need = MOBS_QUANTITY - len(players)
+            if need > 0:
+                names = RussianNames(count=need * 2, patronymic=False, surname=False, rare=True)
+                names = list(set(names))  # Список неповторяющихся имён
+                for i in range(need):
+                    server_mob = Player(names[i], None)
+                    server_mob.color = random.choice(colors)
+                    spawn: LocalPlayer = random.choice(foods)
+                    foods.remove(spawn)  # Удаляем бактерию, чтобы моб её не съел
+                    server_mob.x, server_mob.y = spawn.x, spawn.y
+                    server_mob.size = random.randint(10, 100)
+                    s.add(server_mob)
+                    s.commit()
+                    local_mob = LocalPlayer(server_mob.id, server_mob.name, None, None).load()
+                    local_mob.new_speed()
+                    players[server_mob.id] = local_mob  # Записываем новых мобов в словарь
+
+        # Добавляем список еды
+        need = FOOD_QUANTITY - len(foods)
+        for i in range(need):
+            foods.append(Food(
+                x=random.randint(0, WIDHT_ROOM),
+                y=random.randint(0, HEIGHT_ROOM),
+                size=FOOD_SIZE,
+                color=random.choice(colors)
+            ))
+
     for id in list(players):  # Пробегаемся по списку игроков
         if players[id].sock is not None:
             try:
@@ -224,10 +257,10 @@ while server_works:
             if abs(dist_x) <= hero.w_vision // 2 + food.size and abs(dist_y) <= hero.h_vision // 2 + food.size:
                 # Проверка может ли 1-й игрок видеть еду.
                 distance = math.sqrt(dist_x ** 2 + dist_y ** 2)
-                if distance < hero.size:
+                if distance < hero.size: # Ест ли игрок еду
                     # Тут мы в будущем напишем код увеличения размера
                     hero.size = math.sqrt(hero.size ** 2 + food.size ** 2)
-                    # hero.new_speed()
+                    hero.new_speed()
                     food.size = 0
                     foods.remove(food)
                 if hero.address is not None and food.size != 0:
@@ -252,6 +285,7 @@ while server_works:
                 distance = math.sqrt(dist_x ** 2 + dist_y ** 2)
                 if distance <= hero_1.size and hero_1.size > 1.1 * hero_2.size:
                     hero_1.size = math.sqrt(hero_1.size ** 2 + hero_2.size ** 2)
+                    hero_1.new_speed()
                     # Меняем радиус первого игрока
                     hero_2.size, hero_2.speed_x, hero_2.speed_y = 0, 0, 0
 
@@ -271,6 +305,7 @@ while server_works:
                 distance = math.sqrt(dist_x ** 2 + dist_y ** 2)
                 if distance <= hero_2.size and hero_2.size > 1.1 * hero_1.size:
                     hero_2.size = math.sqrt(hero_1.size ** 2 + hero_2.size ** 2)
+                    hero_2.new_speed()
                     # Меняем радиус второго игрока
                     hero_1.size, hero_1.speed_x, hero_1.speed_y = 0, 0, 0
 
@@ -313,6 +348,11 @@ while server_works:
             del players[id]
             s.query(Player).filter(Player.id == id).delete()
             s.commit()
+
+
+   # for size in list(players):
+      #  if players[id]
+
 
     # Отрисовываем серверное окно
     for event in pygame.event.get():
