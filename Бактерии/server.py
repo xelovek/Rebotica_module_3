@@ -46,6 +46,7 @@ class LocalPlayer:
         self.color = 'red'
         self.w_vision = 800
         self.h_vision = 600
+        self.L=1
 
     def update(self):
         # х координата
@@ -67,6 +68,19 @@ class LocalPlayer:
                 self.y += self.speed_y  # то двигаем его
         else:  # Если игрок находится в границе комнаты
             self.y += self.speed_y
+
+        # Меняем масштаб игрока
+        if self.size >= self.w_vision / 4:
+            if self.w_vision <= WIDHT_ROOM or self.h_vision <= HEIGHT_ROOM:
+                self.L *= 2
+                self.w_vision = 800 * self.L
+                self.h_vision = 600 * self.L
+
+        if self.size < self.w_vision / 8 and self.size < self.h_vision / 8:
+            if self.L > 1:
+                self.L //= 2
+                self.w_vision = 800 * self.L
+                self.h_vision = 600 * self.L
 
     def change_speed(self, vector):
         vector = find(vector)
@@ -265,9 +279,9 @@ while server_works:
                     foods.remove(food)
                 if hero.address is not None and food.size != 0:
                     # Подготовим данные к добавлению в список
-                    x_ = str(round(dist_x))
-                    y_ = str(round(dist_y))  # временные
-                    size_ = str(round(food.size))
+                    x_ = str(round(dist_x / hero.L))
+                    y_ = str(round(dist_y / hero.L))  # временные
+                    size_ = str(round(food.size / hero.L))
                     color_ = food.color
 
                     data = x_ + " " + y_ + " " + size_ + " " + color_
@@ -291,9 +305,9 @@ while server_works:
 
                 if hero_1.address is not None:
                     # Подготовим данные к добавлению в список
-                    x_ = str(round(dist_x))
-                    y_ = str(round(dist_y))  # временные
-                    size_ = str(round(hero_2.size))
+                    x_ = str(round(dist_x / hero_1.L))
+                    y_ = str(round(dist_y / hero_1.L))  # временные
+                    size_ = str(round(hero_2.size / hero_1.L))
                     color_ = hero_2.color
 
                     data = x_ + " " + y_ + " " + size_ + " " + color_
@@ -311,9 +325,9 @@ while server_works:
 
                 if hero_2.address is not None:
                     # Подготовим данные к добавлению в список
-                    x_ = str(round(-dist_x))
-                    y_ = str(round(-dist_y))  # временные
-                    size_ = str(round(hero_1.size))
+                    x_ = str(round(-dist_x / hero_2.L))
+                    y_ = str(round(-dist_y / hero_2.L))  # временные
+                    size_ = str(round(hero_1.size / hero_2.L))
                     color_ = hero_1.color
 
                     data = x_ + " " + y_ + " " + size_ + " " + color_
@@ -321,7 +335,7 @@ while server_works:
 
     # Формируем ответ каждой бактерии
     for id in list(players):
-        r_ = str(round(players[id].size))
+        r_ = str(round(players[id].size / players[id].L))
         visible_bacteries[id] = [r_] + visible_bacteries[id]  # Добавляем в начало списка размер игрока
         visible_bacteries[id] = "<" + ",".join(visible_bacteries[id]) + ">"
         print(visible_bacteries[id])
@@ -350,14 +364,23 @@ while server_works:
             s.commit()
 
 
-   # for size in list(players):
-      #  if players[id]
 
 
     # Отрисовываем серверное окно
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             server_works = False
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_DOWN:
+                for id in list(players):
+                    player = players[id]
+                    if player.sock is not None:
+                        player.size //= 2
+            if event.key == pygame.K_UP:
+                for id in list(players):
+                    player = players[id]
+                    if player.sock is not None:
+                        player.size *= 2
     screen.fill('black')
     for id in list(players):
         player = players[id]
@@ -368,6 +391,8 @@ while server_works:
     for id in list(players):
         player = players[id]
         players[id].update()
+        if tick % 300 == 0:
+            player.size *= 0.97
         if tick % 500 == 0:
             player.sync()
     pygame.display.update()

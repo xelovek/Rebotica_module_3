@@ -59,6 +59,7 @@ HEIGHT = 600
 CC = (WIDTH // 2, HEIGHT // 2)
 old = (0, 0)
 radius = 50
+buffer = 1024
 
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Настраиваем сокет
@@ -83,6 +84,7 @@ text_render = text_surface.get_rect()
 text_render.center = CC
 
 def find(vector: str):
+    global buffer
     first = None
     for num, sign in enumerate(vector):
         if sign == "<":
@@ -91,6 +93,8 @@ def find(vector: str):
             second = num
             result = vector[first + 1:second]  # Поменяли
             return result
+    if buffer < 1000000:
+        buffer = int(buffer * 1.5)
     return ""
 
 def draw_bacteries(data: list[str]):
@@ -112,7 +116,8 @@ while run:
             pos = pygame.mouse.get_pos() # берем координаты мыши
             vector = pos[0] - CC[0], pos[1] - CC[1]
             lenv = math.sqrt(vector[0] ** 2 + vector[1] ** 2)
-            vector = vector[0] / lenv, vector[1] / lenv
+            if lenv != 0:
+                vector = vector[0] / lenv, vector[1] / lenv
             if lenv <= radius:
                 vector = 0, 0
             if vector != old:
@@ -124,7 +129,7 @@ while run:
 
 
     # Получаем
-    data = sock.recv(1024).decode()
+    data = sock.recv(buffer).decode()
     data = find(data).split(",")  # Разбиваем на шары
     # Рисуем новое поле
     screen.fill('gray')
