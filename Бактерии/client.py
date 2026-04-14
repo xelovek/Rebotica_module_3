@@ -135,6 +135,7 @@ while run:
     screen.fill('gray')
     if data != ['']:
         radius = int(data[0])  # Сохраняем размер из сообщения в переменную
+        grid.draw()
         draw_bacteries(data[1:])  # Срезаем размер, чтобы он не попадал в ф-ию рисования соседейй
     pygame.draw.circle(screen, color, CC, radius)
     screen.blit(text_surface, text_render)
