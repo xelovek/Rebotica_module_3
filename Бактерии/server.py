@@ -122,6 +122,12 @@ class LocalPlayer:
         #  Меняем абсолютную скорость игрока
         self.abs_speed = 10 / math.sqrt(self.size)
 
+    def new_vector(self): # Случайный вектор для мобов
+        vector = f"<{random.randint(-1, 1)},{random.randint(-1, 1)}>"
+        while vector == f"<0,0>":
+            vector = f"<{random.randint(-1, 1)},{random.randint(-1, 1)}>"
+        self.change_speed(vector)
+
 class Food:
     def __init__(self, x, y, size, color):
         self.x = x
