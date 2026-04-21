@@ -165,7 +165,9 @@ while run:
     # Рисуем новое поле
     screen.fill('gray25')
     if data != ['']:
-        radius = int(data[0])  # Сохраняем размер из сообщения в переменную
+        parameters = list(map(int, data[0].split(" ")))
+        radius = parameters[0]  # Сохраняем размер из сообщения в переменную
+        grid.update(parameters[1:])
         grid.draw()
         draw_bacteries(data[1:])  # Срезаем размер, чтобы он не попадал в ф-ию рисования соседейй
     pygame.draw.circle(screen, color, CC, radius)

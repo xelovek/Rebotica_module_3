@@ -344,7 +344,10 @@ while server_works:
     # Формируем ответ каждой бактерии
     for id in list(players):
         r_ = str(round(players[id].size / players[id].L))
-        visible_bacteries[id] = [r_] + visible_bacteries[id]  # Добавляем в начало списка размер игрока
+        x_ = str(round(players[id].x / players[id].L))
+        y_ = str(round(players[id].y / players[id].L))
+        L_ = str(round(players[id].L))
+        visible_bacteries[id] = [r_+" "+ x_ +" "+ y_ +" "+ L_ ] + visible_bacteries[id]  # Добавляем в начало списка размер игрока
         visible_bacteries[id] = "<" + ",".join(visible_bacteries[id]) + ">"
         print(visible_bacteries[id])
 
