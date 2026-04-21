@@ -106,6 +106,37 @@ def draw_bacteries(data: list[str]):
         color = data[3]
         pygame.draw.circle(screen, color, (x, y), size)
 
+class Grid:
+    def __init__(self, screen, color):
+        self.screen = screen
+        self.x = 0
+        self.y = 0
+        self.start_size = 200
+        self.size = self.start_size
+        self.color = color
+
+    def update(self, parameters: list[int]):
+        x, y, L = parameters
+        self.size = self.start_size // L
+        self.x = -self.size + (-x) % self.size
+        self.y = -self.size + (-y) % self.size
+
+    def draw(self):
+        for i in range(WIDTH // self.size + 2):
+            pygame.draw.line(self.screen, self.color,
+                             (self.x + i * self.size, 0),  # Координаты начала линии
+                             (self.x + i * self.size, HEIGHT),  # Координаты конца линии
+                             1)
+        for i in range(HEIGHT // self.size + 2):
+            pygame.draw.line(self.screen, self.color,
+                             (0, self.y + i * self.size),  # Координаты начала линии
+                             (WIDTH, self.y + i * self.size),  # Координаты конца линии
+                             1)
+
+
+
+grid = Grid(screen, "seashell4")
+
 run = True
 while run:
     clock.tick(FPS)
@@ -132,7 +163,7 @@ while run:
     data = sock.recv(buffer).decode()
     data = find(data).split(",")  # Разбиваем на шары
     # Рисуем новое поле
-    screen.fill('gray')
+    screen.fill('gray25')
     if data != ['']:
         radius = int(data[0])  # Сохраняем размер из сообщения в переменную
         grid.draw()

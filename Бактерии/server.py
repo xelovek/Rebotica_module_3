@@ -41,8 +41,8 @@ class LocalPlayer:
         self.size = 50
         self.errors = 0
         self.abs_speed = 1
-        self.speed_x = 0
-        self.speed_y = 0
+        self.speed_x = 1
+        self.speed_y = 1
         self.color = 'red'
         self.w_vision = 800
         self.h_vision = 600
@@ -177,6 +177,8 @@ for x in range(MOBS_QUANTITY):
     s.add(server_mob)
     s.commit()
     local_mob = LocalPlayer(server_mob.id, server_mob.name, None, None).load()
+    local_mob.new_speed()
+    local_mob.new_vector()
     players[server_mob.id] = local_mob  # Записываем всех мобов в словарь
 
 # Создание еды
@@ -235,6 +237,7 @@ while server_works:
                     s.commit()
                     local_mob = LocalPlayer(server_mob.id, server_mob.name, None, None).load()
                     local_mob.new_speed()
+                    local_mob.new_vector()
                     players[server_mob.id] = local_mob  # Записываем новых мобов в словарь
 
         # Добавляем список еды
@@ -259,8 +262,7 @@ while server_works:
 
         else:
             if tick % 400 == 0:
-                vector = f"<{random.randint(-1, 1)},{random.randint(-1, 1)}>"
-                players[id].change_speed(vector)  # Случайный вектор для мобов
+                players[id].new_vector()
 
     # Определим, что видит каждый игрок
     visible_bacteries = {}
