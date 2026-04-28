@@ -78,11 +78,6 @@ pygame.display.set_caption("Бактерии")
 FPS = 100
 clock = pygame.time.Clock()
 
-font = pygame.font.SysFont("Arial", 32)
-text_surface = font.render(name, True, (255, 255, 255))
-text_render = text_surface.get_rect()
-text_render.center = CC
-
 def find(vector: str):
     global buffer
     first = None
@@ -105,6 +100,14 @@ def draw_bacteries(data: list[str]):
         size = int(data[2])
         color = data[3]
         pygame.draw.circle(screen, color, (x, y), size)
+        if len(data)>4:
+            draw_text(x,y,size//2,data[4], 'black')
+
+def draw_text(x,y,r,text,color):
+    font = pygame.font.Font(None, r)
+    text = font.render(text, True, color)
+    rect = text.get_rect(center=(x, y))
+    screen.blit(text, rect)
 
 class Grid:
     def __init__(self, screen, color):
@@ -171,7 +174,7 @@ while run:
         grid.draw()
         draw_bacteries(data[1:])  # Срезаем размер, чтобы он не попадал в ф-ию рисования соседейй
     pygame.draw.circle(screen, color, CC, radius)
-    screen.blit(text_surface, text_render)
+    draw_text(CC[0],CC[1],radius,name,"black")
 
     pygame.display.update()
 

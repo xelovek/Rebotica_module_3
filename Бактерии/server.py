@@ -317,8 +317,11 @@ while server_works:
                     y_ = str(round(dist_y / hero_1.L))  # временные
                     size_ = str(round(hero_2.size / hero_1.L))
                     color_ = hero_2.color
+                    name_ = hero_2.name
 
                     data = x_ + " " + y_ + " " + size_ + " " + color_
+                    if hero_2.size>=30*hero_1.L:
+                        data+= " " + name_
                     visible_bacteries[hero_1.id].append(data)
 
             # j-й игрок видит i-того
@@ -337,8 +340,12 @@ while server_works:
                     y_ = str(round(-dist_y / hero_2.L))  # временные
                     size_ = str(round(hero_1.size / hero_2.L))
                     color_ = hero_1.color
+                    name_ = hero_1.name
 
                     data = x_ + " " + y_ + " " + size_ + " " + color_
+                    if hero_1.size >= 30 * hero_2.L:
+                        data += " " + name_
+
                     visible_bacteries[hero_2.id].append(data)
 
     # Формируем ответ каждой бактерии
