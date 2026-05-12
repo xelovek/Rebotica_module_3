@@ -78,6 +78,8 @@ pygame.display.set_caption("Бактерии")
 FPS = 100
 clock = pygame.time.Clock()
 
+
+
 def find(vector: str):
     global buffer
     first = None
@@ -158,9 +160,6 @@ while run:
                 old = vector
                 msg = f"<{vector[0]},{vector[1]}>"
                 sock.send(msg.encode())
-
-
-
 
     # Получаем
     data = sock.recv(buffer).decode()
